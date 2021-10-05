@@ -1,2 +1,2 @@
-# mlflow-docker
-Docker scripts for MLflow
+# mlflow-tracking-docker
+Docker scripts for MLflow tracking server
