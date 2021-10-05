@@ -1,0 +1,4 @@
+FROM mariadb:10.6.4
+
+COPY db-healthcheck /usr/local/bin/
+HEALTHCHECK CMD ["db-healthcheck"]

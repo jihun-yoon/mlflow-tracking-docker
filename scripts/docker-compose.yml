@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+    db:
+        restart: always
+        build:
+            context: .
+            dockerfile: mariadb
+        image: mlflow_db
+        container_name: mlflow_db
+        expose:
+            - "3306"
+        #ports:
+        #    - "5536:3306"
+        networks:
+            - backend
+        environment:
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        volumes:
+            - ${DB_DATA}:/var/lib/mysql
+            - ${DB_CONFIG}:/etc/mysql/conf.d
+
+
+    web:
+        restart: always
+        build: 
+            context: .
+            dockerfile: mlflow
+        depends_on:
+            - db
+        image: mlflow_server
+        container_name: mlflow_server
+        expose:
+            - "5000"
+        #ports:
+        #    - "5007:5000"
+        networks:
+            - frontend
+            - backend
+        volumes:
+            - /hdd_ext/hdd_ext_tmp/usr/hutom-admin/data/mlflow/tracking/artifact/local:/default_artifact_root
+        command: mlflow server --backend-store-uri mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE} --default-artifact-root /default_artifact_root --host 0.0.0.0
+
+    nginx:
+        restart: always
+        build: 
+            context: .
+            dockerfile: nginx
+        image: mlflow_nginx
+        container_name: mlflow_nginx
+        ports:
+            - "4499:80"
+        networks:
+            - frontend
+        depends_on:
+            - web
+
+networks:
+    frontend:
+        driver: bridge
+    backend:
+        driver: bridge
